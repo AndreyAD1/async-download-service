@@ -8,7 +8,7 @@ INTERVAL_SECS = 1
 ARCHIVE_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
 
 
-async def archivate(request):
+async def archive(request):
     archive_name = request.match_info.get('archive_hash')
     archive_path = os.path.join(ARCHIVE_DIR_PATH, archive_name)
 
@@ -53,6 +53,6 @@ if __name__ == '__main__':
     app = web.Application()
     app.add_routes([
         web.get('/', handle_index_page),
-        web.get('/archive/{archive_hash}/', archivate),
+        web.get('/archive/{archive_hash}/', archive),
     ])
     web.run_app(app)
