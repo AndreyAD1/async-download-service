@@ -7,7 +7,7 @@ import aiofiles
 INTERVAL_SECS = 1
 
 
-async def uptime_handler(request):
+async def archivate(request):
     response = web.StreamResponse()
 
     # Большинство браузеров не отрисовывают частично загруженный контент, только если это не HTML.
@@ -27,10 +27,6 @@ async def uptime_handler(request):
         await asyncio.sleep(INTERVAL_SECS)
 
 
-async def archivate(request):
-    raise NotImplementedError
-
-
 async def handle_index_page(request):
     async with aiofiles.open('index.html', mode='r') as index_file:
         index_contents = await index_file.read()
@@ -42,6 +38,5 @@ if __name__ == '__main__':
     app.add_routes([
         web.get('/', handle_index_page),
         web.get('/archive/{archive_hash}/', archivate),
-        web.get('/archive/7kna', uptime_handler)
     ])
     web.run_app(app)
