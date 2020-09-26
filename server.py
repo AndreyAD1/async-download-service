@@ -1,24 +1,31 @@
 import asyncio
-import datetime
+import os
 
 from aiohttp import web
 import aiofiles
 
 INTERVAL_SECS = 1
+ARCHIVE_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
 
 
 async def archivate(request):
-    response = web.StreamResponse()
-
     archive_name = request.match_info.get('archive_hash')
+    archive_path = os.path.join(ARCHIVE_DIR_PATH, archive_name)
+
+    if not os.path.isdir(archive_path):
+        async with aiofiles.open('404.html', mode='r') as error_file:
+            error_contents = await error_file.read()
+        return web.Response(text=error_contents, content_type='text/html')
+
     file_name = f'{archive_name}.zip'
     header_value = f'attachment; filename="{file_name}"'
+    response = web.StreamResponse()
     response.headers['Content-Disposition'] = header_value
 
     # Отправляет клиенту HTTP заголовки
     await response.prepare(request)
 
-    command = f'zip -r -j - ./test_photos/{archive_name}'
+    command = f'zip -r -j - {archive_path}'
     process = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE
