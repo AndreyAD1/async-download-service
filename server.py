@@ -10,21 +10,30 @@ INTERVAL_SECS = 1
 async def archivate(request):
     response = web.StreamResponse()
 
-    # Большинство браузеров не отрисовывают частично загруженный контент, только если это не HTML.
-    # Поэтому отправляем клиенту именно HTML, указываем это в Content-Type.
-    response.headers['Content-Type'] = 'text/html'
+    archive_name = request.match_info.get('archive_hash')
+    file_name = f'{archive_name}.zip'
+    header_value = f'attachment; filename="{file_name}"'
+    response.headers['Content-Disposition'] = header_value
 
     # Отправляет клиенту HTTP заголовки
     await response.prepare(request)
 
+    command = f'zip -r -j - ./test_photos/{archive_name}'
+    process = await asyncio.create_subprocess_shell(
+        command,
+        stdout=asyncio.subprocess.PIPE
+    )
+
     while True:
-        formatted_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        message = f'{formatted_date}<br>'  # <br> — HTML тег переноса строки
+        archived_data = await process.stdout.read(100 * 1024)
+        if not archived_data:
+            break
 
         # Отправляет клиенту очередную порцию ответа
-        await response.write(message.encode('utf-8'))
+        await response.write(archived_data)
 
-        await asyncio.sleep(INTERVAL_SECS)
+    await process.wait()
+    return response
 
 
 async def handle_index_page(request):
