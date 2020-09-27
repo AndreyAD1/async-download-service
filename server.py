@@ -34,17 +34,22 @@ async def archive(request):
     )
 
     chunk_number = 0
-    while True:
-        chunk_number += 1
-        archived_data = await process.stdout.read(100 * 1024)
-        if not archived_data:
-            break
+    try:
+        while True:
+            chunk_number += 1
+            archived_data = await process.stdout.read(100 * 1024)
+            if not archived_data:
+                break
 
-        logging.info(f'Sending archive chunk number {chunk_number}...')
-        await response.write(archived_data)
-
-    await process.wait()
-    return response
+            logging.info(f'Sending archive chunk number {chunk_number}...')
+            await response.write(archived_data)
+    except asyncio.CancelledError:
+        logging.warning('Download was interrupted.')
+        await process.wait()
+        logging.debug('zip was terminated.')
+        raise
+    finally:
+        return response
 
 
 async def handle_index_page(request):
