@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from aiohttp import web
@@ -13,6 +14,7 @@ async def archive(request):
     archive_path = os.path.join(ARCHIVE_DIR_PATH, archive_name)
 
     if not os.path.isdir(archive_path):
+        logging.warning(f'Invalid archive requested: {archive_path}')
         async with aiofiles.open('404.html', mode='r') as error_file:
             error_contents = await error_file.read()
         return web.Response(text=error_contents, content_type='text/html')
@@ -31,12 +33,14 @@ async def archive(request):
         stdout=asyncio.subprocess.PIPE
     )
 
+    chunk_number = 0
     while True:
+        chunk_number += 1
         archived_data = await process.stdout.read(100 * 1024)
         if not archived_data:
             break
 
-        # Отправляет клиенту очередную порцию ответа
+        logging.info(f'Sending archive chunk number {chunk_number}...')
         await response.write(archived_data)
 
     await process.wait()
@@ -50,6 +54,7 @@ async def handle_index_page(request):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     app = web.Application()
     app.add_routes([
         web.get('/', handle_index_page),
