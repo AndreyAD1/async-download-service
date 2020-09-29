@@ -45,10 +45,10 @@ async def archive(request):
             await response.write(archived_data)
     except asyncio.CancelledError:
         logging.warning('Download was interrupted.')
-        process.terminate()
-        logging.debug('zip was terminated.')
-        raise
     finally:
+        logging.info('finally.')
+        process.kill()
+        logging.warning('zip was terminated.')
         return response
 
 
