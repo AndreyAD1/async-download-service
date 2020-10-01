@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging
 import os
@@ -7,6 +8,31 @@ import aiofiles
 
 INTERVAL_SECS = 1
 ARCHIVE_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
+
+
+def get_console_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-v',
+        action='store_true',
+        help='Enable detailed logs.'
+    )
+    parser.add_argument(
+        '-t',
+        '--response_timeout',
+        type=int,
+        default=0,
+        help='Response timeout in seconds.'
+    )
+    parser.add_argument(
+        '-p',
+        '--data_path',
+        required=True,
+        type=str,
+        help='A path to data the server should send to clients.'
+    )
+    inputted_arguments = parser.parse_args()
+    return inputted_arguments
 
 
 async def archive(request):
@@ -59,6 +85,7 @@ async def handle_index_page(request):
 
 
 if __name__ == '__main__':
+    console_arguments = get_console_arguments()
     logging.basicConfig(level=logging.INFO)
     app = web.Application()
     app.add_routes([
