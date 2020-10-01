@@ -7,13 +7,15 @@ from aiohttp import web
 import aiofiles
 
 INTERVAL_SECS = 1
-ARCHIVE_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
+DATA_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
+RESPONSE_TIMEOUT = 0
 
 
 def get_console_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-v',
+        '--verbose',
         action='store_true',
         help='Enable detailed logs.'
     )
@@ -37,7 +39,7 @@ def get_console_arguments():
 
 async def archive(request):
     archive_name = request.match_info.get('archive_hash')
-    archive_path = os.path.join(ARCHIVE_DIR_PATH, archive_name)
+    archive_path = os.path.join(DATA_DIR_PATH, archive_name)
 
     if not os.path.isdir(archive_path):
         logging.warning(f'Invalid archive requested: {archive_path}')
@@ -69,6 +71,8 @@ async def archive(request):
 
             logging.info(f'Sending archive chunk number {chunk_number}...')
             await response.write(archived_data)
+            if RESPONSE_TIMEOUT:
+                await asyncio.sleep(RESPONSE_TIMEOUT)
     except asyncio.CancelledError:
         logging.warning('Download was interrupted.')
         process.kill()
@@ -86,7 +90,10 @@ async def handle_index_page(request):
 
 if __name__ == '__main__':
     console_arguments = get_console_arguments()
-    logging.basicConfig(level=logging.INFO)
+    if console_arguments.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    RESPONSE_TIMEOUT = console_arguments.response_timeout
+    DATA_DIR_PATH = console_arguments.data_path
     app = web.Application()
     app.add_routes([
         web.get('/', handle_index_page),
