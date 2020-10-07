@@ -6,9 +6,8 @@ import os
 from aiohttp import web
 import aiofiles
 
-INTERVAL_SECS = 1
-DATA_DIR_PATH = os.path.join(os.getcwd(), 'test_photos')
-RESPONSE_TIMEOUT = 0
+data_dir_path = os.path.join(os.getcwd(), 'test_photos')
+response_timeout = 0
 
 
 def get_console_arguments():
@@ -39,7 +38,7 @@ def get_console_arguments():
 
 async def archive(request):
     archive_name = request.match_info.get('archive_hash')
-    archive_path = os.path.join(DATA_DIR_PATH, archive_name)
+    archive_path = os.path.join(data_dir_path, archive_name)
 
     if not os.path.isdir(archive_path):
         logging.warning(f'Invalid archive requested: {archive_path}')
@@ -71,8 +70,8 @@ async def archive(request):
 
             logging.info(f'Sending archive chunk number {chunk_number}...')
             await response.write(archived_data)
-            if RESPONSE_TIMEOUT:
-                await asyncio.sleep(RESPONSE_TIMEOUT)
+            if response_timeout:
+                await asyncio.sleep(response_timeout)
     except asyncio.CancelledError:
         logging.warning('Download was interrupted.')
         process.kill()
@@ -88,15 +87,20 @@ async def handle_index_page(request):
     return web.Response(text=index_contents, content_type='text/html')
 
 
-if __name__ == '__main__':
+def main():
     console_arguments = get_console_arguments()
     if console_arguments.verbose:
         logging.basicConfig(level=logging.DEBUG)
-    RESPONSE_TIMEOUT = console_arguments.response_timeout
-    DATA_DIR_PATH = console_arguments.data_path
+    global response_timeout, data_dir_path
+    response_timeout = console_arguments.response_timeout
+    data_dir_path = console_arguments.data_path
     app = web.Application()
     app.add_routes([
         web.get('/', handle_index_page),
         web.get('/archive/{archive_hash}/', archive),
     ])
     web.run_app(app)
+
+
+if __name__ == '__main__':
+    main()
