@@ -41,7 +41,11 @@ async def archive(request):
         logging.warning(f'Invalid archive requested: {archive_path}')
         async with aiofiles.open('404.html', mode='r') as error_file:
             error_contents = await error_file.read()
-        return web.Response(text=error_contents, content_type='text/html')
+        return web.Response(
+            status=404,
+            text=error_contents,
+            content_type='text/html'
+        )
 
     file_name = f'{archive_name}.zip'
     header_value = f'attachment; filename="{file_name}"'
