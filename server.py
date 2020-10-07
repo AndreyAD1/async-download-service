@@ -16,11 +16,11 @@ def get_console_arguments():
         help='Enable detailed logs.'
     )
     parser.add_argument(
-        '-t',
-        '--response_timeout',
+        '-g',
+        '--chunk_gap',
         type=int,
         default=0,
-        help='Response timeout in seconds.'
+        help='A gap between response chunks in seconds.'
     )
     parser.add_argument(
         '-p',
@@ -67,8 +67,8 @@ async def archive(request):
 
             logging.info(f'Sending archive chunk number {chunk_number}...')
             await response.write(archived_data)
-            if request.app['response_timeout']:
-                await asyncio.sleep(request.app['response_timeout'])
+            if request.app['chunk_gap']:
+                await asyncio.sleep(request.app['chunk_gap'])
     except asyncio.CancelledError:
         logging.warning('Download was interrupted.')
         process.kill()
@@ -88,10 +88,10 @@ def main():
     console_arguments = get_console_arguments()
     if console_arguments.verbose:
         logging.basicConfig(level=logging.DEBUG)
-    response_timeout = console_arguments.response_timeout
+    chunk_gap = console_arguments.chunk_gap
     data_dir_path = console_arguments.data_path
     app = web.Application()
-    app['response_timeout'] = response_timeout
+    app['chunk_gap'] = chunk_gap
     app['data_dir_path'] = data_dir_path
     app.add_routes([
         web.get('/', handle_index_page),
