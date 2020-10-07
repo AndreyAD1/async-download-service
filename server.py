@@ -34,10 +34,10 @@ def get_console_arguments():
 
 
 async def archive(request):
-    archive_name = request.match_info.get('archive_hash')
+    archive_name = request.match_info.get('archive_hash', '')
     archive_path = os.path.join(request.app['data_dir_path'], archive_name)
 
-    if not os.path.isdir(archive_path):
+    if not os.path.isdir(archive_path) or not archive_name:
         logging.warning(f'Invalid archive requested: {archive_path}')
         async with aiofiles.open('404.html', mode='r') as error_file:
             error_contents = await error_file.read()
