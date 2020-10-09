@@ -56,10 +56,11 @@ async def archive(request):
     # Отправляет клиенту HTTP заголовки
     await response.prepare(request)
 
-    command = f'zip -r -j - {archive_path}'
+    command = f'zip -r - .'
     process = await asyncio.create_subprocess_exec(
         *command.split(),
-        stdout=asyncio.subprocess.PIPE
+        stdout=asyncio.subprocess.PIPE,
+        cwd=archive_path
     )
 
     try:
