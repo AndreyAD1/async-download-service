@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from itertools import count
 import logging
 import os
 
@@ -61,10 +62,8 @@ async def archive(request):
         stdout=asyncio.subprocess.PIPE
     )
 
-    chunk_number = 0
     try:
-        while True:
-            chunk_number += 1
+        for chunk_number in count():
             archived_data = await process.stdout.read(100 * 1024)
             if not archived_data:
                 break
