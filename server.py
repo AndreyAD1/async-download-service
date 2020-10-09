@@ -56,8 +56,8 @@ async def archive(request):
     await response.prepare(request)
 
     command = f'zip -r -j - {archive_path}'
-    process = await asyncio.create_subprocess_shell(
-        command,
+    process = await asyncio.create_subprocess_exec(
+        *command.split(),
         stdout=asyncio.subprocess.PIPE
     )
 
@@ -75,9 +75,13 @@ async def archive(request):
                 await asyncio.sleep(request.app['chunk_gap'])
     except asyncio.CancelledError:
         logging.warning('Download was interrupted.')
-        process.kill()
-        logging.info('zip was terminated')
+        raise
     finally:
+        try:
+            process.kill()
+            logging.info('zip was terminated.')
+        except ProcessLookupError:
+            pass
         await process.communicate()
         return response
 
